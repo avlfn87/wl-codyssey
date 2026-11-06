@@ -5,9 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>빈티지 영화 티어 메이커</title>
     <style>
-        /* --- 디자인 테마 (CSS) --- */
         :root {
-            --bg-color: #1a0a0a; /* 짙은 와인색 배경 */
+            --bg-color: #1a0a0a;
             --panel-color: #2d1b1b;
             --gold: #d4af37;
             --text-light: #f5e6d3;
@@ -27,6 +26,7 @@
             align-items: center;
             margin: 0;
             padding: 20px;
+            user-select: none; /* 텍스트 선택 방지 */
         }
 
         h1 {
@@ -34,16 +34,13 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
             border-bottom: 2px double var(--gold);
             padding-bottom: 10px;
-            margin-bottom: 30px;
         }
 
-        /* 티어 컨테이너 */
         #tier-container {
             width: 100%;
             max-width: 800px;
             background: var(--panel-color);
             border: 5px solid #3d2b2b;
-            box-shadow: 0 0 20px rgba(0,0,0,0.7);
             padding: 10px;
         }
 
@@ -54,8 +51,6 @@
             background: rgba(0,0,0,0.2);
         }
 
-        .tier-row:last-child { border-bottom: none; }
-
         .tier-label {
             width: 80px;
             display: flex;
@@ -64,11 +59,9 @@
             font-size: 2rem;
             font-weight: bold;
             color: #000;
-            text-shadow: 1px 1px 0px rgba(255,255,255,0.3);
             flex-shrink: 0;
         }
 
-        /* 티어별 색상 */
         .s { background-color: var(--tier-s); }
         .a { background-color: var(--tier-a); }
         .b { background-color: var(--tier-b); }
@@ -81,30 +74,27 @@
             flex-wrap: wrap;
             padding: 10px;
             gap: 10px;
-            min-width: 100px;
+            min-width: 150px; /* 드롭 영역 확보 */
         }
 
-        /* 영화 카드 스타일 */
+        /* 영화 카드 */
         .movie-card {
             width: 100px;
             height: 150px;
             background-color: #333;
             border: 2px solid var(--gold);
             cursor: grab;
-            overflow: hidden;
             position: relative;
             box-shadow: 3px 3px 10px rgba(0,0,0,0.5);
-            transition: transform 0.2s;
         }
 
-        .movie-card:active { cursor: grabbing; }
         .movie-card img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            pointer-events: none; /* 중요: 이미지가 드래그 이벤트를 방해하지 않도록 함 */
         }
 
-        /* 대기열(Pool) */
         #pool {
             width: 100%;
             max-width: 800px;
@@ -119,7 +109,6 @@
             justify-content: center;
         }
 
-        /* 컨트롤 버튼 */
         .controls {
             margin-top: 20px;
             display: flex;
@@ -128,7 +117,6 @@
 
         button {
             padding: 10px 20px;
-            font-size: 1rem;
             background-color: var(--gold);
             border: none;
             color: #1a0a0a;
@@ -137,8 +125,6 @@
             border-radius: 4px;
         }
 
-        button:hover { background-color: #f5d161; }
-
         #file-input { display: none; }
     </style>
 </head>
@@ -146,58 +132,48 @@
 
     <h1>🎬 VINTAGE MOVIE TIER LIST</h1>
 
-    <!-- 티어리스트 영역 (저장될 영역) -->
     <div id="tier-container">
         <div class="tier-row">
             <div class="tier-label s">S</div>
-            <div class="tier-content" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+            <div class="tier-content" ondragover="allowDrop(event)" ondrop="drop(event)"></div>
         </div>
         <div class="tier-row">
             <div class="tier-label a">A</div>
-            <div class="tier-content" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+            <div class="tier-content" ondragover="allowDrop(event)" ondrop="drop(event)"></div>
         </div>
         <div class="tier-row">
             <div class="tier-label b">B</div>
-            <div class="tier-content" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+            <div class="tier-content" ondragover="allowDrop(event)" ondrop="drop(event)"></div>
         </div>
         <div class="tier-row">
             <div class="tier-label c">C</div>
-            <div class="tier-content" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+            <div class="tier-content" ondragover="allowDrop(event)" ondrop="drop(event)"></div>
         </div>
         <div class="tier-row">
             <div class="tier-label d">D</div>
-            <div class="tier-content" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+            <div class="tier-content" ondragover="allowDrop(event)" ondrop="drop(event)"></div>
         </div>
     </div>
 
-    <!-- 이미지 대기열 -->
-    <div id="pool" ondrop="drop(event)" ondragover="allowDrop(event)">
-        <p id="placeholder-text" style="color: #666; width: 100%; text-align: center;">이미지를 업로드하면 여기에 나타납니다 (최대 10개)</p>
+    <div id="pool" ondragover="allowDrop(event)" ondrop="drop(event)">
+        <p id="placeholder-text" style="color: #666; width: 100%; text-align: center;">이미지를 업로드하세요</p>
     </div>
 
-    <!-- 컨트롤 버튼 -->
     <div class="controls">
         <input type="file" id="file-input" multiple accept="image/*" onchange="handleUpload(event)">
         <button onclick="document.getElementById('file-input').click()">이미지 불러오기</button>
         <button onclick="saveAsImage()">결과 저장하기</button>
     </div>
 
-    <!-- 이미지 저장을 위한 외부 라이브러리 (CDN) -->
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 
     <script>
-        /* --- 동작 로직 (JavaScript) --- */
         let cardCount = 0;
 
-        // 1. 이미지 업로드 처리
         function handleUpload(event) {
             const files = event.target.files;
             const pool = document.getElementById('pool');
             const placeholder = document.getElementById('placeholder-text');
-
-            if (files.length + cardCount > 12) {
-                alert("원활한 관리를 위해 이미지는 10개 내외로 업로드해주세요.");
-            }
 
             if (files.length > 0 && placeholder) {
                 placeholder.style.display = 'none';
@@ -210,26 +186,24 @@
                     card.className = 'movie-card';
                     card.draggable = true;
                     card.id = 'card-' + Date.now() + Math.random();
-                    card.ondragstart = drag;
+                    
+                    // 드래그 시작 이벤트
+                    card.ondragstart = function(ev) {
+                        ev.dataTransfer.setData("text", ev.target.id);
+                    };
 
                     const img = document.createElement('img');
                     img.src = e.target.result;
                     
                     card.appendChild(img);
                     pool.appendChild(card);
-                    cardCount++;
                 };
                 reader.readAsDataURL(file);
             }
         }
 
-        // 2. 드래그 앤 드롭 로직
         function allowDrop(e) {
-            e.preventDefault();
-        }
-
-        function drag(e) {
-            e.dataTransfer.setData("text", e.target.id);
+            e.preventDefault(); // 드롭을 허용하기 위해 필수
         }
 
         function drop(e) {
@@ -237,24 +211,22 @@
             const data = e.dataTransfer.getData("text");
             const draggedElement = document.getElementById(data);
             
-            // drop 타겟이 tier-content인지 확인 (자식 요소인 img 등에 드롭되는 경우 처리)
+            // 드롭된 위치가 tier-content인지 확인 (이미지나 다른 요소 위에 떨어뜨려도 부모를 찾아감)
             let target = e.target;
             while (target && !target.classList.contains('tier-content') && target.id !== 'pool') {
                 target = target.parentElement;
             }
 
-            if (target) {
+            if (target && draggedElement) {
                 target.appendChild(draggedElement);
             }
         }
 
-        // 3. 이미지 저장 기능 (html2canvas 사용)
         function saveAsImage() {
             const container = document.getElementById('tier-container');
-            
             html2canvas(container).then(canvas => {
                 const link = document.createElement('a');
-                link.download = 'my-movie-tier-list.png';
+                link.download = 'movie-tier-list.png';
                 link.href = canvas.toDataURL();
                 link.click();
             });
