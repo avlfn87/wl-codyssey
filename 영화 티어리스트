@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>영화 티어리스트</title>
+<style>
+:root{--bg:#f7f7f5;--card:#fff;--text:#1d1d1f;--sub:#6b6b70;--line:#e4e4e0;--accent:#2d5bff;
+--S:#ff7f7f;--A:#ffbf7f;--B:#ffdf7f;--C:#bfff7f;--D:#7fbfff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Pretendard",-apple-system,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif}
+main{max-width:1000px;margin:0 auto;padding:32px 20px 60px}
+#title{width:100%;font-weight:800;font-size:56px;line-height:1.15;font-family:inherit;border:0;background:transparent;color:var(--text);text-align:center;padding:8px;margin-bottom:24px;border-bottom:2px solid transparent;outline:0}
+#title.edit:hover,#title.edit:focus{border-bottom-color:var(--line)}
+button,.btn{font-weight:600;font-size:14px;font-family:inherit;padding:9px 16px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--text);cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.add{display:none;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:24px}
+.edit-on .add{display:flex}
+.add input[type=text]{padding:9px 12px;border:1px solid var(--line);border-radius:8px;width:220px;background:var(--card);color:var(--text);font-family:inherit}
+.tier{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:8px;background:var(--card);min-height:132px}
+.label{width:84px;flex:none;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:36px;color:#1d1d1f}
+.zone{flex:1;display:flex;flex-wrap:wrap;gap:8px;padding:8px;align-content:flex-start;min-height:116px}
+.zone.over{background:rgba(45,91,255,.1)}
+#poolwrap{margin-top:28px;border:1px dashed var(--line)}
+.card{width:84px;height:116px;border-radius:6px;overflow:hidden;background:#e9ecf5;cursor:pointer;flex:none;border:1px solid var(--line)}
+.edit-on .card{cursor:grab}
+.card img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.card .t{display:flex;align-items:center;justify-content:center;height:100%;padding:6px;text-align:center;font-weight:700;font-size:13px;line-height:1.3;color:#1d1d1f;word-break:keep-all}
+.dock{display:flex;justify-content:space-between;align-items:center;margin-top:16px}
+#trash{width:56px;height:56px;border-radius:50%;background:var(--card);border:2px dashed var(--line);display:flex;align-items:center;justify-content:center;font-size:26px;transition:transform .1s}
+#trash.over{background:#ffe3e3;border-color:#e5484d;transform:scale(1.15)}
+.share{display:none;max-width:640px;margin:16px auto 0;gap:8px}
+.share.show{display:flex}
+.share input{flex:1;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--text);min-width:0}
+.msg{text-align:center;color:var(--sub);font-size:13px;margin:8px 0;min-height:1em}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:20;cursor:pointer}
+#modal.show{display:flex}
+#modal .big{max-width:min(90vw,480px);max-height:88vh;border-radius:10px;background:#fff}
+#modal .big.txt{padding:48px 40px;font-weight:800;font-size:28px;line-height:1.3;color:#1d1d1f;text-align:center}
+</style>
+</head>
+<body>
+<main>
+  <input id="title" placeholder="어떤 영화의 티어리스트인가요?" maxlength="60" aria-label="티어리스트 제목">
+  <div class="msg" id="msg"></div>
+  <div class="add">
+    <input type="text" id="mtitle" placeholder="영화 제목" maxlength="40">
+    <label class="btn">포스터 선택<input type="file" id="mfile" accept="image/*" hidden></label>
+    <span id="fname" class="msg" style="align-self:center;margin:0"></span>
+    <button class="primary" id="addbtn">영화 추가</button>
+  </div>
+  <div id="tiers"></div>
+  <div class="tier" id="poolwrap"><div class="zone" data-tier="pool"></div></div>
+  <div class="dock"><div id="bar"></div><div id="trash" aria-label="삭제">🗑️</div></div>
+  <div class="share" id="share"><input id="link" readonly><button id="copy">복사</button></div>
+</main>
+<div id="modal"></div>
+<script>
+const TIERS=["S","A","B","C","D"], KEY="movie-tierlist-v1";
+let state={title:"",items:[]}, isView=false, file=null; // item: {id,title,poster,tier}
+const $=id=>document.getElementById(id);
+const sid=()=>Math.random().toString(36).slice(2,10);
+
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){$("msg").textContent="저장 공간이 부족해요. 포스터를 몇 개 줄여 주세요."}}
+function load(){
+  let s=null;try{s=JSON.parse(localStorage.getItem(KEY)||"null")}catch(e){}
+  if(s&&Array.isArray(s.items)){state=s;return}
+  state={title:"",items:["기생충","인셉션","올드보이","인터스텔라","타이타닉"].map(t=>({id:sid(),title:t,poster:null,tier:"pool"}))};
+}
+// 이미지를 지정한 가로 크기의 JPEG 데이터로 줄이기
+function shrink(src,w,q){return new Promise((res,rej)=>{
+  const im=new Image();
+  im.onload=()=>{const r=Math.min(1,w/im.width),c=document.createElement("canvas");
+    c.width=Math.round(im.width*r);c.height=Math.round(im.height*r);
+    const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);
+    res(c.toDataURL("image/jpeg",q))};
+  im.onerror=rej;im.src=src;});}
+const readFile=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)});
+
+function cardEl(it){
+  const c=document.createElement("div");c.className="card";c.draggable=!isView;c.title=it.title;
+  if(it.poster){const im=document.createElement("img");im.src=it.poster;im.alt=it.title;c.appendChild(im)}
+  else{const t=document.createElement("div");t.className="t";t.textContent=it.title;c.appendChild(t)}
+  if(!isView)c.ondragstart=e=>e.dataTransfer.setData("text/plain",it.id);
+  c.onclick=()=>openModal(it);
+  return c;
+}
+function openModal(it){
+  const m=$("modal");m.innerHTML="";
+  if(it.poster){const im=document.createElement("img");im.className="big";im.src=it.poster;im.alt=it.title;m.appendChild(im)}
+  else{const d=document.createElement("div");d.className="big txt";d.textContent=it.title;m.appendChild(d)}
+  m.classList.add("show");
+}
+$("modal").onclick=()=>$("modal").classList.remove("show");
+document.addEventListener("keydown",e=>{if(e.key==="Escape")$("modal").classList.remove("show")});
+
+function dropTo(el,fn){
+  if(isView)return;
+  el.ondragover=e=>{e.preventDefault();el.classList.add("over")};
+  el.ondragleave=()=>el.classList.remove("over");
+  el.ondrop=e=>{e.preventDefault();el.classList.remove("over");fn(e.dataTransfer.getData("text/plain"))};
+}
+const move=(id,tier)=>{const it=state.items.find(i=>i.id===id);if(it){it.tier=tier;save();render()}};
+dropTo($("trash"),id=>{state.items=state.items.filter(i=>i.id!==id);save();render()});
+
+function render(){
+  document.body.classList.toggle("edit-on",!isView);
+  const tt=$("title");tt.value=state.title;tt.readOnly=isView;tt.classList.toggle("edit",!isView);
+  const wrap=$("tiers");wrap.innerHTML="";
+  TIERS.forEach(t=>{
+    const row=document.createElement("div");row.className="tier";
+    const l=document.createElement("div");l.className="label";l.textContent=t;l.style.background="var(--"+t+")";
+    const z=document.createElement("div");z.className="zone";
+    state.items.filter(i=>i.tier===t).forEach(i=>z.appendChild(cardEl(i)));
+    dropTo(z,id=>move(id,t));row.append(l,z);wrap.appendChild(row);
+  });
+  const pz=document.querySelector("#poolwrap .zone");pz.innerHTML="";
+  state.items.filter(i=>!TIERS.includes(i.tier)).forEach(i=>pz.appendChild(cardEl(i)));
+  dropTo(pz,id=>move(id,"pool"));
+  $("poolwrap").style.display=$("trash").style.display=isView?"none":"";
+  const bar=$("bar");bar.innerHTML="";
+  const b=document.createElement("button");
+  if(isView){b.textContent="내 티어리스트 만들기";b.onclick=()=>{location.hash="";location.reload()}}
+  else{b.className="primary";b.textContent="공유 링크 만들기";b.onclick=makeLink}
+  bar.appendChild(b);
+}
+$("title").oninput=e=>{if(!isView){state.title=e.target.value;save()}};
+$("mfile").onchange=e=>{file=e.target.files[0]||null;$("fname").textContent=file?file.name:""};
+$("addbtn").onclick=async()=>{
+  const title=$("mtitle").value.trim();
+  if(!title){$("msg").textContent="영화 제목을 입력해 주세요.";return}
+  let poster=null;
+  if(file){try{poster=await shrink(await readFile(file),360,0.8)}catch(e){$("msg").textContent="포스터를 읽지 못해 제목만 추가했어요."}}
+  state.items.push({id:sid(),title,poster,tier:"pool"});
+  $("mtitle").value="";$("mfile").value="";file=null;$("fname").textContent="";
+  if($("msg").textContent==="영화 제목을 입력해 주세요.")$("msg").textContent="";
+  save();render();
+};
+
+// 공유: 지금 모습을 링크 주소(#뒤)에 담는다. 서버가 필요 없다.
+const enc=s=>btoa(unescape(encodeURIComponent(s))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+const dec=s=>decodeURIComponent(escape(atob(s.replace(/-/g,"+").replace(/_/g,"/"))));
+async function makeLink(){
+  $("msg").textContent="링크 만드는 중…";
+  try{
+    const items=[];
+    for(const i of state.items.filter(i=>TIERS.includes(i.tier)))
+      items.push({t:i.title,p:i.poster?await shrink(i.poster,200,0.65):null,r:i.tier});
+    const url=location.href.split("#")[0]+"#share="+enc(JSON.stringify({t:state.title,i:items}));
+    $("link").value=url;$("share").classList.add("show");
+    $("msg").textContent="지금 모습이 담긴 링크가 만들어졌어요. 티어에 배치한 영화만 담겨요. (링크는 이 HTML 파일을 열 수 있는 곳에서만 열려요)";
+  }catch(e){$("msg").textContent="링크를 만들지 못했어요."}
+}
+$("copy").onclick=async()=>{
+  try{await navigator.clipboard.writeText($("link").value);$("copy").textContent="복사됨"}catch(e){$("link").select();document.execCommand&&document.execCommand("copy")}
+  setTimeout(()=>$("copy").textContent="복사",1500);
+};
+
+(function init(){
+  const m=location.hash.match(/^#share=(.+)$/);
+  if(m){
+    try{const d=JSON.parse(dec(m[1]));
+      state={title:d.t||"",items:d.i.map(x=>({id:sid(),title:x.t,poster:x.p,tier:x.r}))};isView=true;
+    }catch(e){load();$("msg").textContent="링크를 읽지 못해서 내 티어리스트를 보여줘요."}
+  }else load();
+  render();
+})();
+</script>
+</body>
+</html>
