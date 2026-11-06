@@ -1,170 +1,769 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>영화 티어리스트</title>
-<style>
-:root{--bg:#f7f7f5;--card:#fff;--text:#1d1d1f;--sub:#6b6b70;--line:#e4e4e0;--accent:#2d5bff;
---S:#ff7f7f;--A:#ffbf7f;--B:#ffdf7f;--C:#bfff7f;--D:#7fbfff}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:"Pretendard",-apple-system,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif}
-main{max-width:1000px;margin:0 auto;padding:32px 20px 60px}
-#title{width:100%;font-weight:800;font-size:56px;line-height:1.15;font-family:inherit;border:0;background:transparent;color:var(--text);text-align:center;padding:8px;margin-bottom:24px;border-bottom:2px solid transparent;outline:0}
-#title.edit:hover,#title.edit:focus{border-bottom-color:var(--line)}
-button,.btn{font-weight:600;font-size:14px;font-family:inherit;padding:9px 16px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--text);cursor:pointer}
-button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-.add{display:none;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:24px}
-.edit-on .add{display:flex}
-.add input[type=text]{padding:9px 12px;border:1px solid var(--line);border-radius:8px;width:220px;background:var(--card);color:var(--text);font-family:inherit}
-.tier{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:8px;background:var(--card);min-height:132px}
-.label{width:84px;flex:none;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:36px;color:#1d1d1f}
-.zone{flex:1;display:flex;flex-wrap:wrap;gap:8px;padding:8px;align-content:flex-start;min-height:116px}
-.zone.over{background:rgba(45,91,255,.1)}
-#poolwrap{margin-top:28px;border:1px dashed var(--line)}
-.card{width:84px;height:116px;border-radius:6px;overflow:hidden;background:#e9ecf5;cursor:pointer;flex:none;border:1px solid var(--line)}
-.edit-on .card{cursor:grab}
-.card img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
-.card .t{display:flex;align-items:center;justify-content:center;height:100%;padding:6px;text-align:center;font-weight:700;font-size:13px;line-height:1.3;color:#1d1d1f;word-break:keep-all}
-.dock{display:flex;justify-content:space-between;align-items:center;margin-top:16px}
-#trash{width:56px;height:56px;border-radius:50%;background:var(--card);border:2px dashed var(--line);display:flex;align-items:center;justify-content:center;font-size:26px;transition:transform .1s}
-#trash.over{background:#ffe3e3;border-color:#e5484d;transform:scale(1.15)}
-.share{display:none;max-width:640px;margin:16px auto 0;gap:8px}
-.share.show{display:flex}
-.share input{flex:1;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--text);min-width:0}
-.msg{text-align:center;color:var(--sub);font-size:13px;margin:8px 0;min-height:1em}
-#modal{position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:20;cursor:pointer}
-#modal.show{display:flex}
-#modal .big{max-width:min(90vw,480px);max-height:88vh;border-radius:10px;background:#fff}
-#modal .big.txt{padding:48px 40px;font-weight:800;font-size:28px;line-height:1.3;color:#1d1d1f;text-align:center}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>영화 티어리스트</title>
+    <style>
+        :root {
+            --tier-s: #ff7f7f;
+            --tier-a: #ffbf7f;
+            --tier-b: #ffff7f;
+            --tier-c: #7fff7f;
+            --tier-d: #7fbfff;
+            --bg-color: #f8f9fa;
+            --panel-bg: #ffffff;
+            --border-color: #e9ecef;
+            --text-color: #212529;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 40px 20px;
+            min-width: 900px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* 1. Title (Centered) */
+        .title-input {
+            width: 100%;
+            font-size: 56px;
+            font-weight: bold;
+            border: none;
+            background: transparent;
+            outline: none;
+            margin-bottom: 24px;
+            color: #111;
+            padding: 4px 0;
+            border-bottom: 2px solid transparent;
+            transition: border-color 0.2s;
+            text-align: center;
+        }
+
+        .title-input:focus {
+            border-color: #4da6ff;
+        }
+
+        .title-display {
+            font-size: 56px;
+            font-weight: bold;
+            margin-bottom: 24px;
+            color: #111;
+            text-align: center;
+        }
+
+        /* Read-only notification */
+        .readonly-banner {
+            background-color: #e7f5ff;
+            color: #1971c2;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            border: 1px solid #a5d8ff;
+            text-align: center;
+        }
+
+        /* 2. Add Movie Area */
+        .add-movie-area {
+            background-color: var(--panel-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .add-movie-area input[type="text"] {
+            flex: 1;
+            padding: 12px 16px;
+            font-size: 16px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        .file-label {
+            padding: 12px 16px;
+            background-color: #e9ecef;
+            color: #495057;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .file-label:hover {
+            background-color: #dee2e6;
+        }
+
+        .file-name {
+            font-size: 13px;
+            color: #6c757d;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .add-btn {
+            padding: 12px 24px;
+            background-color: #228be6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .add-btn:hover {
+            background-color: #1c7ed6;
+        }
+
+        /* 3. Tier Rows */
+        .tier-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 30px;
+        }
+
+        .tier-row {
+            display: flex;
+            min-height: 120px;
+            background-color: var(--panel-bg);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .tier-header {
+            width: 120px;
+            min-width: 120px;
+            font-size: 36px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #111;
+            user-select: none;
+        }
+
+        .tier-s { background-color: var(--tier-s); }
+        .tier-a { background-color: var(--tier-a); }
+        .tier-b { background-color: var(--tier-b); }
+        .tier-c { background-color: var(--tier-c); }
+        .tier-d { background-color: var(--tier-d); }
+
+        .tier-content {
+            flex: 1;
+            padding: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-content: flex-start;
+            background-color: #f1f3f5;
+            min-height: 120px;
+        }
+
+        .tier-content.drag-over {
+            background-color: #e7f5ff;
+            outline: 2px dashed #339af0;
+        }
+
+        /* 4. Unassigned Area */
+        .unassigned-area {
+            background-color: var(--panel-bg);
+            border-radius: 8px;
+            padding: 16px;
+            min-height: 120px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+        }
+
+        .unassigned-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            min-height: 90px;
+        }
+
+        .unassigned-content.drag-over {
+            background-color: #e7f5ff;
+            border-radius: 6px;
+            outline: 2px dashed #339af0;
+        }
+
+        /* Movie Card */
+        .movie-card {
+            width: 80px;
+            height: 110px;
+            border-radius: 6px;
+            overflow: hidden;
+            cursor: grab;
+            background-color: #343a40;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            transition: transform 0.15s, box-shadow 0.15s;
+            user-select: none;
+            position: relative;
+            word-break: keep-all;
+        }
+
+        .movie-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.25);
+        }
+
+        .movie-card.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+
+        .movie-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            pointer-events: none;
+        }
+
+        .readonly-mode .movie-card {
+            cursor: pointer;
+        }
+
+        /* 5. Bottom Controls */
+        .bottom-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .share-btn {
+            padding: 14px 28px;
+            background-color: #12b886;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: background 0.2s;
+        }
+
+        .share-btn:hover {
+            background-color: #0ca678;
+        }
+
+        .trash-can {
+            width: 120px;
+            height: 60px;
+            border: 2px dashed #fa5252;
+            border-radius: 8px;
+            background-color: #fff5f5;
+            color: #fa5252;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+
+        .trash-can.drag-over {
+            background-color: #fa5252;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        /* 6. Share Link Box */
+        .share-link-box {
+            background-color: var(--panel-bg);
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .share-link-box input {
+            flex: 1;
+            padding: 10px 14px;
+            font-size: 14px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            outline: none;
+            background-color: #f8f9fa;
+        }
+
+        .copy-btn {
+            padding: 10px 20px;
+            background-color: #495057;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .copy-btn:hover {
+            background-color: #343a40;
+        }
+
+        /* Modal */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .modal-backdrop.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            max-width: 80vw;
+            max-height: 85vh;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        .modal-content img {
+            max-width: 70vw;
+            max-height: 70vh;
+            object-fit: contain;
+            border-radius: 6px;
+        }
+
+        .modal-title {
+            margin-top: 16px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #111;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
 </head>
 <body>
-<main>
-  <input id="title" placeholder="어떤 영화의 티어리스트인가요?" maxlength="60" aria-label="티어리스트 제목">
-  <div class="msg" id="msg"></div>
-  <div class="add">
-    <input type="text" id="mtitle" placeholder="영화 제목" maxlength="40">
-    <label class="btn">포스터 선택<input type="file" id="mfile" accept="image/*" hidden></label>
-    <span id="fname" class="msg" style="align-self:center;margin:0"></span>
-    <button class="primary" id="addbtn">영화 추가</button>
-  </div>
-  <div id="tiers"></div>
-  <div class="tier" id="poolwrap"><div class="zone" data-tier="pool"></div></div>
-  <div class="dock"><div id="bar"></div><div id="trash" aria-label="삭제">🗑️</div></div>
-  <div class="share" id="share"><input id="link" readonly><button id="copy">복사</button></div>
-</main>
-<div id="modal"></div>
-<script>
-const TIERS=["S","A","B","C","D"], KEY="movie-tierlist-v1";
-let state={title:"",items:[]}, isView=false, file=null; // item: {id,title,poster,tier}
-const $=id=>document.getElementById(id);
-const sid=()=>Math.random().toString(36).slice(2,10);
+    <div class="container" id="mainContainer">
+        <!-- Visitor Readonly Banner -->
+        <div id="readonlyBanner" class="readonly-banner hidden">
+            👀 읽기 전용 공유 화면입니다. (수정 불가능)
+        </div>
 
-function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){$("msg").textContent="저장 공간이 부족해요. 포스터를 몇 개 줄여 주세요."}}
-function load(){
-  let s=null;try{s=JSON.parse(localStorage.getItem(KEY)||"null")}catch(e){}
-  if(s&&Array.isArray(s.items)){state=s;return}
-  state={title:"",items:["기생충","인셉션","올드보이","인터스텔라","타이타닉"].map(t=>({id:sid(),title:t,poster:null,tier:"pool"}))};
-}
-// 이미지를 지정한 가로 크기의 JPEG 데이터로 줄이기
-function shrink(src,w,q){return new Promise((res,rej)=>{
-  const im=new Image();
-  im.onload=()=>{const r=Math.min(1,w/im.width),c=document.createElement("canvas");
-    c.width=Math.round(im.width*r);c.height=Math.round(im.height*r);
-    const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);
-    res(c.toDataURL("image/jpeg",q))};
-  im.onerror=rej;im.src=src;});}
-const readFile=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)});
+        <!-- 1. Title -->
+        <input type="text" id="tierTitleInput" class="title-input" value="나만의 영화 티어리스트" placeholder="티어리스트 제목 입력">
+        <h1 id="tierTitleDisplay" class="title-display hidden"></h1>
 
-function cardEl(it){
-  const c=document.createElement("div");c.className="card";c.draggable=!isView;c.title=it.title;
-  if(it.poster){const im=document.createElement("img");im.src=it.poster;im.alt=it.title;c.appendChild(im)}
-  else{const t=document.createElement("div");t.className="t";t.textContent=it.title;c.appendChild(t)}
-  if(!isView)c.ondragstart=e=>e.dataTransfer.setData("text/plain",it.id);
-  c.onclick=()=>openModal(it);
-  return c;
-}
-function openModal(it){
-  const m=$("modal");m.innerHTML="";
-  if(it.poster){const im=document.createElement("img");im.className="big";im.src=it.poster;im.alt=it.title;m.appendChild(im)}
-  else{const d=document.createElement("div");d.className="big txt";d.textContent=it.title;m.appendChild(d)}
-  m.classList.add("show");
-}
-$("modal").onclick=()=>$("modal").classList.remove("show");
-document.addEventListener("keydown",e=>{if(e.key==="Escape")$("modal").classList.remove("show")});
+        <!-- 2. Add Movie Area -->
+        <div id="addMovieArea" class="add-movie-area">
+            <input type="text" id="movieTitleInput" placeholder="영화 제목을 입력하세요">
+            <label for="posterFileInput" class="file-label">포스터 선택 (선택)</label>
+            <input type="file" id="posterFileInput" accept="image/*" class="hidden">
+            <span id="fileNameDisplay" class="file-name">선택된 파일 없음</span>
+            <button id="addMovieBtn" class="add-btn">영화 추가</button>
+        </div>
 
-function dropTo(el,fn){
-  if(isView)return;
-  el.ondragover=e=>{e.preventDefault();el.classList.add("over")};
-  el.ondragleave=()=>el.classList.remove("over");
-  el.ondrop=e=>{e.preventDefault();el.classList.remove("over");fn(e.dataTransfer.getData("text/plain"))};
-}
-const move=(id,tier)=>{const it=state.items.find(i=>i.id===id);if(it){it.tier=tier;save();render()}};
-dropTo($("trash"),id=>{state.items=state.items.filter(i=>i.id!==id);save();render()});
+        <!-- 3. Tier Rows -->
+        <div class="tier-list">
+            <div class="tier-row">
+                <div class="tier-header tier-s">S</div>
+                <div class="tier-content" data-tier="S"></div>
+            </div>
+            <div class="tier-row">
+                <div class="tier-header tier-a">A</div>
+                <div class="tier-content" data-tier="A"></div>
+            </div>
+            <div class="tier-row">
+                <div class="tier-header tier-b">B</div>
+                <div class="tier-content" data-tier="B"></div>
+            </div>
+            <div class="tier-row">
+                <div class="tier-header tier-c">C</div>
+                <div class="tier-content" data-tier="C"></div>
+            </div>
+            <div class="tier-row">
+                <div class="tier-header tier-d">D</div>
+                <div class="tier-content" data-tier="D"></div>
+            </div>
+        </div>
 
-function render(){
-  document.body.classList.toggle("edit-on",!isView);
-  const tt=$("title");tt.value=state.title;tt.readOnly=isView;tt.classList.toggle("edit",!isView);
-  const wrap=$("tiers");wrap.innerHTML="";
-  TIERS.forEach(t=>{
-    const row=document.createElement("div");row.className="tier";
-    const l=document.createElement("div");l.className="label";l.textContent=t;l.style.background="var(--"+t+")";
-    const z=document.createElement("div");z.className="zone";
-    state.items.filter(i=>i.tier===t).forEach(i=>z.appendChild(cardEl(i)));
-    dropTo(z,id=>move(id,t));row.append(l,z);wrap.appendChild(row);
-  });
-  const pz=document.querySelector("#poolwrap .zone");pz.innerHTML="";
-  state.items.filter(i=>!TIERS.includes(i.tier)).forEach(i=>pz.appendChild(cardEl(i)));
-  dropTo(pz,id=>move(id,"pool"));
-  $("poolwrap").style.display=$("trash").style.display=isView?"none":"";
-  const bar=$("bar");bar.innerHTML="";
-  const b=document.createElement("button");
-  if(isView){b.textContent="내 티어리스트 만들기";b.onclick=()=>{location.hash="";location.reload()}}
-  else{b.className="primary";b.textContent="공유 링크 만들기";b.onclick=makeLink}
-  bar.appendChild(b);
-}
-$("title").oninput=e=>{if(!isView){state.title=e.target.value;save()}};
-$("mfile").onchange=e=>{file=e.target.files[0]||null;$("fname").textContent=file?file.name:""};
-$("addbtn").onclick=async()=>{
-  const title=$("mtitle").value.trim();
-  if(!title){$("msg").textContent="영화 제목을 입력해 주세요.";return}
-  let poster=null;
-  if(file){try{poster=await shrink(await readFile(file),360,0.8)}catch(e){$("msg").textContent="포스터를 읽지 못해 제목만 추가했어요."}}
-  state.items.push({id:sid(),title,poster,tier:"pool"});
-  $("mtitle").value="";$("mfile").value="";file=null;$("fname").textContent="";
-  if($("msg").textContent==="영화 제목을 입력해 주세요.")$("msg").textContent="";
-  save();render();
-};
+        <!-- 4. Unassigned Area -->
+        <div id="unassignedSection" class="unassigned-area">
+            <div id="unassignedContent" class="unassigned-content" data-tier="unassigned"></div>
+        </div>
 
-// 공유: 지금 모습을 링크 주소(#뒤)에 담는다. 서버가 필요 없다.
-const enc=s=>btoa(unescape(encodeURIComponent(s))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
-const dec=s=>decodeURIComponent(escape(atob(s.replace(/-/g,"+").replace(/_/g,"/"))));
-async function makeLink(){
-  $("msg").textContent="링크 만드는 중…";
-  try{
-    const items=[];
-    for(const i of state.items.filter(i=>TIERS.includes(i.tier)))
-      items.push({t:i.title,p:i.poster?await shrink(i.poster,200,0.65):null,r:i.tier});
-    const url=location.href.split("#")[0]+"#share="+enc(JSON.stringify({t:state.title,i:items}));
-    $("link").value=url;$("share").classList.add("show");
-    $("msg").textContent="지금 모습이 담긴 링크가 만들어졌어요. 티어에 배치한 영화만 담겨요. (링크는 이 HTML 파일을 열 수 있는 곳에서만 열려요)";
-  }catch(e){$("msg").textContent="링크를 만들지 못했어요."}
-}
-$("copy").onclick=async()=>{
-  try{await navigator.clipboard.writeText($("link").value);$("copy").textContent="복사됨"}catch(e){$("link").select();document.execCommand&&document.execCommand("copy")}
-  setTimeout(()=>$("copy").textContent="복사",1500);
-};
+        <!-- 5. Bottom Controls -->
+        <div id="bottomBar" class="bottom-bar">
+            <button id="shareBtn" class="share-btn">공유 링크 만들기</button>
+            <div id="trashCan" class="trash-can">🗑️ 쓰레기통</div>
+        </div>
 
-(function init(){
-  const m=location.hash.match(/^#share=(.+)$/);
-  if(m){
-    try{const d=JSON.parse(dec(m[1]));
-      state={title:d.t||"",items:d.i.map(x=>({id:sid(),title:x.t,poster:x.p,tier:x.r}))};isView=true;
-    }catch(e){load();$("msg").textContent="링크를 읽지 못해서 내 티어리스트를 보여줘요."}
-  }else load();
-  render();
-})();
-</script>
+        <!-- 6. Share Link Box -->
+        <div id="shareLinkBox" class="share-link-box hidden">
+            <input type="text" id="shareUrlInput" readonly>
+            <button id="copyUrlBtn" class="copy-btn">복사</button>
+        </div>
+    </div>
+
+    <!-- Modal for Previewing Card -->
+    <div id="imageModal" class="modal-backdrop">
+        <div class="modal-content">
+            <img id="modalImg" src="" alt="포스터" class="hidden">
+            <div id="modalText" class="modal-title"></div>
+        </div>
+    </div>
+
+    <script>
+        // State Management
+        let isReadOnly = false;
+        let movies = [];
+        let tierTitle = "나만의 영화 티어리스트";
+        let selectedPosterBase64 = "";
+
+        const DEFAULT_MOVIES = [
+            { id: "def-1", title: "기생충", poster: "", tier: "unassigned" },
+            { id: "def-2", title: "인셉션", poster: "", tier: "unassigned" },
+            { id: "def-3", title: "올드보이", poster: "", tier: "unassigned" },
+            { id: "def-4", title: "인터스텔라", poster: "", tier: "unassigned" },
+            { id: "def-5", title: "타이타닉", poster: "", tier: "unassigned" }
+        ];
+
+        // DOM Elements
+        const titleInput = document.getElementById("tierTitleInput");
+        const titleDisplay = document.getElementById("tierTitleDisplay");
+        const movieTitleInput = document.getElementById("movieTitleInput");
+        const posterFileInput = document.getElementById("posterFileInput");
+        const fileNameDisplay = document.getElementById("fileNameDisplay");
+        const addMovieBtn = document.getElementById("addMovieBtn");
+        const addMovieArea = document.getElementById("addMovieArea");
+        const unassignedSection = document.getElementById("unassignedSection");
+        const bottomBar = document.getElementById("bottomBar");
+        const shareBtn = document.getElementById("shareBtn");
+        const trashCan = document.getElementById("trashCan");
+        const shareLinkBox = document.getElementById("shareLinkBox");
+        const shareUrlInput = document.getElementById("shareUrlInput");
+        const copyUrlBtn = document.getElementById("copyUrlBtn");
+        const readonlyBanner = document.getElementById("readonlyBanner");
+        const mainContainer = document.getElementById("mainContainer");
+
+        // Modal Elements
+        const imageModal = document.getElementById("imageModal");
+        const modalImg = document.getElementById("modalImg");
+        const modalText = document.getElementById("modalText");
+
+        // Init App
+        window.addEventListener("DOMContentLoaded", () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const shareDataStr = urlParams.get("share");
+
+            if (shareDataStr) {
+                // Read-only visitor mode
+                isReadOnly = true;
+                setupReadOnlyMode();
+                loadShareData(shareDataStr);
+            } else {
+                // Owner editing mode
+                isReadOnly = false;
+                loadFromLocalStorage();
+            }
+
+            setupEventListeners();
+            render();
+        });
+
+        function setupReadOnlyMode() {
+            mainContainer.classList.add("readonly-mode");
+            readonlyBanner.classList.remove("hidden");
+            titleInput.classList.add("hidden");
+            titleDisplay.classList.remove("hidden");
+            addMovieArea.classList.add("hidden");
+            unassignedSection.classList.add("hidden");
+            bottomBar.classList.add("hidden");
+            shareLinkBox.classList.add("hidden");
+        }
+
+        function loadFromLocalStorage() {
+            const savedTitle = localStorage.getItem("movie_tier_title");
+            if (savedTitle !== null) {
+                tierTitle = savedTitle;
+            }
+            titleInput.value = tierTitle;
+
+            const savedMovies = localStorage.getItem("movie_tier_movies");
+            if (savedMovies) {
+                try {
+                    movies = JSON.parse(savedMovies);
+                } catch (e) {
+                    movies = [...DEFAULT_MOVIES];
+                }
+            } else {
+                movies = [...DEFAULT_MOVIES];
+            }
+        }
+
+        function saveToLocalStorage() {
+            if (isReadOnly) return;
+            localStorage.setItem("movie_tier_title", tierTitle);
+            localStorage.setItem("movie_tier_movies", JSON.stringify(movies));
+        }
+
+        function loadShareData(encodedData) {
+            try {
+                const jsonStr = decodeURIComponent(atob(encodedData));
+                const data = JSON.parse(jsonStr);
+                tierTitle = data.t || "영화 티어리스트";
+                titleDisplay.innerText = tierTitle;
+                movies = (data.m || []).map((item, idx) => ({
+                    id: "share-" + idx,
+                    title: item.t,
+                    poster: item.p || "",
+                    tier: item.r || "unassigned"
+                }));
+            } catch (e) {
+                alert("공유 데이터를 불러오는데 실패했습니다.");
+            }
+        }
+
+        function setupEventListeners() {
+            // Title Change
+            titleInput.addEventListener("input", (e) => {
+                tierTitle = e.target.value;
+                saveToLocalStorage();
+            });
+
+            // File Upload Preview
+            posterFileInput.addEventListener("change", (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    fileNameDisplay.innerText = file.name;
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        selectedPosterBase64 = event.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    fileNameDisplay.innerText = "선택된 파일 없음";
+                    selectedPosterBase64 = "";
+                }
+            });
+
+            // Add Movie
+            addMovieBtn.addEventListener("click", () => {
+                const title = movieTitleInput.value.trim();
+                if (!title) {
+                    alert("영화 제목을 입력하세요.");
+                    return;
+                }
+
+                const newMovie = {
+                    id: "movie-" + Date.now(),
+                    title: title,
+                    poster: selectedPosterBase64,
+                    tier: "unassigned"
+                };
+
+                movies.push(newMovie);
+                saveToLocalStorage();
+                render();
+
+                // Reset Inputs
+                movieTitleInput.value = "";
+                posterFileInput.value = "";
+                fileNameDisplay.innerText = "선택된 파일 없음";
+                selectedPosterBase64 = "";
+            });
+
+            // Share Button
+            shareBtn.addEventListener("click", () => {
+                // Filter only placed movies
+                const placedMovies = movies.filter(m => m.tier !== "unassigned").map(m => ({
+                    t: m.title,
+                    p: m.poster,
+                    r: m.tier
+                }));
+
+                const sharePayload = {
+                    t: tierTitle,
+                    m: placedMovies
+                };
+
+                const jsonStr = JSON.stringify(sharePayload);
+                const encodedData = btoa(encodeURIComponent(jsonStr));
+
+                const shareUrl = window.location.origin + window.location.pathname + "?share=" + encodedData;
+
+                shareUrlInput.value = shareUrl;
+                shareLinkBox.classList.remove("hidden");
+                shareLinkBox.scrollIntoView({ behavior: 'smooth' });
+            });
+
+            // Copy Share URL
+            copyUrlBtn.addEventListener("click", () => {
+                shareUrlInput.select();
+                navigator.clipboard.writeText(shareUrlInput.value).then(() => {
+                    alert("링크가 클립보드에 복사되었습니다!");
+                }).catch(() => {
+                    document.execCommand("copy");
+                    alert("링크가 클립보드에 복사되었습니다!");
+                });
+            });
+
+            // Modal Close
+            imageModal.addEventListener("click", () => {
+                imageModal.classList.remove("active");
+            });
+
+            // Drag and Drop Zone setup for desktop
+            if (!isReadOnly) {
+                const dropZones = document.querySelectorAll("[data-tier], #trashCan");
+                dropZones.forEach(zone => {
+                    zone.addEventListener("dragover", (e) => {
+                        e.preventDefault();
+                        zone.classList.add("drag-over");
+                    });
+
+                    zone.addEventListener("dragleave", () => {
+                        zone.classList.remove("drag-over");
+                    });
+
+                    zone.addEventListener("drop", (e) => {
+                        e.preventDefault();
+                        zone.classList.remove("drag-over");
+                        const movieId = e.dataTransfer.getData("text/plain");
+                        if (!movieId) return;
+
+                        if (zone.id === "trashCan") {
+                            // Delete
+                            movies = movies.filter(m => m.id !== movieId);
+                        } else {
+                            // Move to Tier
+                            const targetTier = zone.getAttribute("data-tier");
+                            const movie = movies.find(m => m.id === movieId);
+                            if (movie) {
+                                movie.tier = targetTier;
+                            }
+                        }
+
+                        saveToLocalStorage();
+                        render();
+                    });
+                });
+            }
+        }
+
+        function createCardElement(movie) {
+            const card = document.createElement("div");
+            card.className = "movie-card";
+            card.dataset.id = movie.id;
+
+            if (movie.poster) {
+                const img = document.createElement("img");
+                img.src = movie.poster;
+                img.alt = movie.title;
+                card.appendChild(img);
+            } else {
+                card.innerText = movie.title;
+            }
+
+            // Click event for modal enlarge
+            card.addEventListener("click", () => {
+                if (movie.poster) {
+                    modalImg.src = movie.poster;
+                    modalImg.classList.remove("hidden");
+                } else {
+                    modalImg.classList.add("hidden");
+                }
+                modalText.innerText = movie.title;
+                imageModal.classList.add("active");
+            });
+
+            // Drag attributes
+            if (!isReadOnly) {
+                card.draggable = true;
+                card.addEventListener("dragstart", (e) => {
+                    e.dataTransfer.setData("text/plain", movie.id);
+                    card.classList.add("dragging");
+                });
+
+                card.addEventListener("dragend", () => {
+                    card.classList.remove("dragging");
+                });
+            }
+
+            return card;
+        }
+
+        function render() {
+            // Clear all containers
+            const containers = document.querySelectorAll("[data-tier]");
+            containers.forEach(c => c.innerHTML = "");
+
+            // Render Movies
+            movies.forEach(movie => {
+                if (isReadOnly && movie.tier === "unassigned") {
+                    // Do not render unassigned movies in readonly mode
+                    return;
+                }
+                const container = document.querySelector(`[data-tier="${movie.tier}"]`);
+                if (container) {
+                    const cardEl = createCardElement(movie);
+                    container.appendChild(cardEl);
+                }
+            });
+        }
+    </script>
 </body>
 </html>
