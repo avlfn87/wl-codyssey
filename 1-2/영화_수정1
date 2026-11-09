@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>빈티지 영화 티어 메이커</title>
+    <style>
+        /* --- 디자인 테마 (CSS) --- */
+        :root {
+            --bg-color: #1a0a0a; 
+            --panel-color: #2d1b1b;
+            --gold: #d4af37;
+            --text-light: #f5e6d3;
+            --tier-s: #ff4b2b;
+            --tier-a: #ff8c00;
+            --tier-b: #ffd700;
+            --tier-c: #4caf50;
+            --tier-d: #2196f3;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-light);
+            font-family: 'Georgia', serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: var(--gold);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            border-bottom: 2px double var(--gold);
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+
+        #tier-container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--panel-color);
+            border: 5px solid #3d2b2b;
+            box-shadow: 0 0 20px rgba(0,0,0,0.7);
+            padding: 10px;
+        }
+
+        .tier-row {
+            display: flex;
+            min-height: 160px;
+            border-bottom: 1px solid #444;
+            background: rgba(0,0,0,0.2);
+        }
+
+        .tier-row:last-child { border-bottom: none; }
+
+        .tier-label {
+            width: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #000;
+            flex-shrink: 0;
+        }
+
+        .s { background-color: var(--tier-s); }
+        .a { background-color: var(--tier-a); }
+        .b { background-color: var(--tier-b); }
+        .c { background-color: var(--tier-c); }
+        .d { background-color: var(--tier-d); }
+
+        .tier-content {
+            flex-grow: 1;
+            display: flex;
+            flex-wrap: wrap;
+            padding: 10px;
+            gap: 10px;
+            min-width: 100px;
+        }
+
+        .movie-card {
+            width: 100px;
+            height: 150px;
+            background-color: #333;
+            border: 2px solid var(--gold);
+            cursor: grab;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 3px 3px 10px rgba(0,0,0,0.5);
+            transition: transform 0.2s;
+        }
+
+        .movie-card:active { cursor: grabbing; }
+        
+        /* [수정] 이미지 자체보다 카드(div)가 드래그 이벤트를 잘 받도록 설정 */
+        .movie-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            pointer-events: none; /* 이미지가 마우스 이벤트를 방해하지 않게 함 */
+        }
+
+        #pool {
+            width: 100%;
+            max-width: 800px;
+            margin-top: 30px;
+            padding: 20px;
+            background: #222;
+            border: 2px dashed var(--gold);
+            min-height: 180px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            background-color: var(--gold);
+            border: none;
+            color: #1a0a0a;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 4px;
+        }
+
+        button:hover { background-color: #f5d161; }
+        #file-input { display: none; }
+    </style>
+</head>
+<body>
+
+    <h1>🎬 VINTAGE MOVIE TIER LIST</h1>
+
+    <div id="tier-container">
+        <div class="tier-row">
+            <div class="tier-label s">S</div>
+            <div class="tier-content" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        </div>
+        <div class="tier-row">
+            <div class="tier-label a">A</div>
+            <div class="tier-content" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        </div>
+        <div class="tier-row">
+            <div class="tier-label b">B</div>
+            <div class="tier-content" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        </div>
+        <div class="tier-row">
+            <div class="tier-label c">C</div>
+            <div class="tier-content" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        </div>
+        <div class="tier-row">
+            <div class="tier-label d">D</div>
+            <div class="tier-content" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        </div>
+    </div>
+
+    <div id="pool" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <p id="placeholder-text" style="color: #666; width: 100%; text-align: center;">이미지를 업로드하면 여기에 나타납니다 (최대 10개)</p>
+    </div>
+
+    <div class="controls">
+        <input type="file" id="file-input" multiple accept="image/*" onchange="handleUpload(event)">
+        <button onclick="document.getElementById('file-input').click()">이미지 불러오기</button>
+        <button onclick="saveAsImage()">결과 저장하기</button>
+    </div>
+
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+    <script>
+        let cardCount = 0;
+
+        function handleUpload(event) {
+            const files = event.target.files;
+            const pool = document.getElementById('pool');
+            const placeholder = document.getElementById('placeholder-text');
+
+            if (files.length + cardCount > 12) {
+                alert("원활한 관리를 위해 이미지는 10개 내외로 업로드해주세요.");
+            }
+
+            if (files.length > 0 && placeholder) {
+                placeholder.style.display = 'none';
+            }
+
+            for (let file of files) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const card = document.createElement('div');
+                    card.className = 'movie-card';
+                    card.draggable = true;
+                    // 고유한 ID 생성
+                    card.id = 'card-' + Date.now() + Math.random().toString(36).substr(2, 9);
+                    card.ondragstart = drag;
+
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    
+                    card.appendChild(img);
+                    pool.appendChild(card);
+                    cardCount++;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function allowDrop(e) {
+            e.preventDefault();
+        }
+
+        // [수정] 드래그 시작 시, 클릭된 요소가 무엇이든 가장 가까운 .movie-card의 ID를 가져오도록 변경
+        function drag(e) {
+            const targetCard = e.target.closest('.movie-card');
+            if (targetCard) {
+                e.dataTransfer.setData("text", targetCard.id);
+            }
+        }
+
+        function drop(e) {
+            e.preventDefault();
+            const data = e.dataTransfer.getData("text");
+            const draggedElement = document.getElementById(data);
+            
+            if (!draggedElement) return;
+
+            let target = e.target;
+            while (target && !target.classList.contains('tier-content') && target.id !== 'pool') {
+                target = target.parentElement;
+            }
+
+            if (target) {
+                target.appendChild(draggedElement);
+            }
+        }
+
+        function saveAsImage() {
+            const container = document.getElementById('tier-container');
+            html2canvas(container).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'my-movie-tier-list.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+    </script>
+</body>
+</html>
