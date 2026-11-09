@@ -1,277 +1,264 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>시네마 티어리스트</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Nanum+Myeongjo:wght@400;700;800&display=swap');
-:root{--ink:#241b16;--paper:#eee2c8;--paper2:#e2d1ae;--red:#8d3027;--gold:#b58b4b;--muted:#786b59}
-*{box-sizing:border-box}
-body{margin:0;min-height:100vh;color:var(--ink);font-family:'Gowun Batang','Nanum Myeongjo',serif;background:radial-gradient(ellipse at 50% 15%,rgba(255,244,213,.12),transparent 48%),linear-gradient(135deg,#211914,#3b281e 55%,#211914);padding:28px 18px 50px}
-body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.14;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.24'/%3E%3C/svg%3E")}
-.shell{max-width:1180px;margin:auto}
-header{text-align:center;color:#f0dfbd;margin:0 auto 24px}
-.eyebrow{font-size:11px;letter-spacing:5px;color:#c9a66e;text-transform:uppercase}
-h1{font-size:clamp(30px,5vw,49px);font-weight:700;letter-spacing:3px;margin:9px 0 5px;text-shadow:0 3px 0 #000}
-.subtitle{font-size:13px;color:#c9b99d;letter-spacing:1px}
-.rule{height:1px;max-width:250px;margin:17px auto;background:linear-gradient(90deg,transparent,#b58b4b,transparent)}
-.panel{background:var(--paper);border:1px solid #b99d6d;box-shadow:0 15px 40px #0008,inset 0 0 0 5px rgba(255,255,255,.16);padding:20px;margin-bottom:18px;position:relative}
-.panel:before,.panel:after{content:"✦";position:absolute;color:#a88954;font-size:12px;top:10px}.panel:before{left:12px}.panel:after{right:12px}
-.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px}
-h2{font-size:16px;letter-spacing:1px;margin:0}
-.count{font-size:12px;color:var(--muted)}
-.toolbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
-button,.upload-label{border:1px solid #6f291f;background:var(--red);color:#fff3dc;padding:10px 15px;font:700 12px 'Gowun Batang',serif;letter-spacing:.5px;cursor:pointer;transition:.18s;box-shadow:0 2px 0 #572018}
-button:hover,.upload-label:hover{background:#a34435;transform:translateY(-1px)}
-button.secondary{background:#e7d8b9;color:#3a2a20;border-color:#9e8357;box-shadow:0 2px 0 #b8a17a}
-button.secondary:hover{background:#f4e8ce}
-input[type=file]{display:none}
-.hint{font-size:12px;color:#756650;margin:12px 0 0;line-height:1.7}
-.queue{display:flex;flex-wrap:wrap;gap:12px;min-height:82px;padding:4px 2px}
-.empty{width:100%;border:1px dashed #b49b70;color:#8a795e;text-align:center;padding:23px 10px;font-size:13px}
-.poster{width:88px;position:relative;cursor:grab;user-select:none;flex:0 0 auto}
-.poster:active{cursor:grabbing}
-.poster img{width:88px;height:128px;object-fit:cover;display:block;border:4px solid #f7edda;outline:1px solid #9e8968;box-shadow:0 3px 7px #34271955;background:#d5c5a5}
-.poster .remove{position:absolute;right:-7px;top:-8px;width:22px;height:22px;padding:0;border-radius:50%;font:14px sans-serif;background:#38251d;border:1px solid #f1dfba;box-shadow:none}
-.poster .name{font-size:10px;text-align:center;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:5px;color:#5b4934}
-.board{background:#e9dcc0;border:8px double #987647;padding:13px;box-shadow:inset 0 0 25px #b49b6b55}
-.board-top{text-align:center;margin:0 0 12px;color:#7b2c23;font-size:11px;letter-spacing:4px}
-.tier{display:grid;grid-template-columns:76px minmax(0,1fr);margin-bottom:7px;min-height:145px;border:1px solid #a88e62;background:#d8c7a5;transition:.15s}
-.tier:last-child{margin-bottom:0}
-.tier.over{outline:3px solid #8d3027;outline-offset:-3px;background:#e7d8b9}
-.tier-label{display:flex;align-items:center;justify-content:center;font-family:'Nanum Myeongjo',serif;font-size:34px;font-weight:800;color:#f5e8cb;background:#7d2d24;border-right:3px solid #c4a36a;text-shadow:0 2px 2px #32140f}
-.tier[data-tier="A"] .tier-label{background:#9b5631}.tier[data-tier="B"] .tier-label{background:#9c7940}.tier[data-tier="C"] .tier-label{background:#6e7654}.tier[data-tier="D"] .tier-label{background:#62605a}
-.tier-content{display:flex;align-content:flex-start;align-items:flex-start;flex-wrap:wrap;gap:10px;padding:8px;min-width:0}
-.tier-content:empty:after{content:"포스터를 여기에 놓으세요";align-self:center;color:#8b795c;font-size:12px;padding:8px}
-.tier .poster{width:76px}.tier .poster img{width:76px;height:111px}
-.tier .poster .name{font-size:9px}
-.footer-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:18px 0 0}
-.save{padding:13px 28px;font-size:14px;letter-spacing:1px;background:#7d2d24;border:1px solid #c9a66e;box-shadow:0 3px 0 #4a1d17}
-.smallprint{text-align:center;color:#b9a98e;font-size:11px;line-height:1.8;margin-top:16px}
-.dragging{opacity:.35}
-@media(max-width:600px){body{padding:18px 10px 35px}.panel{padding:17px 12px}.tier{grid-template-columns:52px minmax(0,1fr);min-height:125px}.tier-label{font-size:27px}.tier-content{gap:7px;padding:7px}.tier .poster{width:62px}.tier .poster img{width:62px;height:91px}.poster{width:72px}.poster img{width:72px;height:105px}.toolbar button,.upload-label{padding:9px 11px}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>빈티지 영화 티어 메이커</title>
+    <style>
+        /* --- 디자인 테마 (CSS) --- */
+        :root {
+            --bg-color: #1a0a0a; /* 짙은 와인색 배경 */
+            --panel-color: #2d1b1b;
+            --gold: #d4af37;
+            --text-light: #f5e6d3;
+            --tier-s: #ff4b2b;
+            --tier-a: #ff8c00;
+            --tier-b: #ffd700;
+            --tier-c: #4caf50;
+            --tier-d: #2196f3;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-light);
+            font-family: 'Georgia', serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: var(--gold);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            border-bottom: 2px double var(--gold);
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+
+        /* 티어 컨테이너 */
+        #tier-container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--panel-color);
+            border: 5px solid #3d2b2b;
+            box-shadow: 0 0 20px rgba(0,0,0,0.7);
+            padding: 10px;
+        }
+
+        .tier-row {
+            display: flex;
+            min-height: 160px;
+            border-bottom: 1px solid #444;
+            background: rgba(0,0,0,0.2);
+        }
+
+        .tier-row:last-child { border-bottom: none; }
+
+        .tier-label {
+            width: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #000;
+            text-shadow: 1px 1px 0px rgba(255,255,255,0.3);
+            flex-shrink: 0;
+        }
+
+        /* 티어별 색상 */
+        .s { background-color: var(--tier-s); }
+        .a { background-color: var(--tier-a); }
+        .b { background-color: var(--tier-b); }
+        .c { background-color: var(--tier-c); }
+        .d { background-color: var(--tier-d); }
+
+        .tier-content {
+            flex-grow: 1;
+            display: flex;
+            flex-wrap: wrap;
+            padding: 10px;
+            gap: 10px;
+            min-width: 100px;
+        }
+
+        /* 영화 카드 스타일 */
+        .movie-card {
+            width: 100px;
+            height: 150px;
+            background-color: #333;
+            border: 2px solid var(--gold);
+            cursor: grab;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 3px 3px 10px rgba(0,0,0,0.5);
+            transition: transform 0.2s;
+        }
+
+        .movie-card:active { cursor: grabbing; }
+        .movie-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 대기열(Pool) */
+        #pool {
+            width: 100%;
+            max-width: 800px;
+            margin-top: 30px;
+            padding: 20px;
+            background: #222;
+            border: 2px dashed var(--gold);
+            min-height: 180px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        /* 컨트롤 버튼 */
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            background-color: var(--gold);
+            border: none;
+            color: #1a0a0a;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 4px;
+        }
+
+        button:hover { background-color: #f5d161; }
+
+        #file-input { display: none; }
+    </style>
 </head>
 <body>
-<div class="shell">
-<header>
-  <div class="eyebrow">The Grand Picture House · Est. 1924</div>
-  <h1>시네마 티어리스트</h1>
-  <div class="subtitle">나만의 영화 컬렉션을, 나만의 기준으로</div>
-  <div class="rule"></div>
-</header>
 
-<section class="panel">
-  <div class="section-head"><h2>✦ 포스터 보관함</h2><span class="count" id="count">0 / 10</span></div>
-  <div class="toolbar">
-    <label class="upload-label" for="files">＋ 포스터 이미지 추가</label>
-    <input id="files" type="file" accept="image/*" multiple>
-    <button class="secondary" id="clearAll" type="button">전체 비우기</button>
-  </div>
-  <div class="hint">이미지를 선택해 추가하세요. 포스터를 아래 등급 칸으로 드래그하거나, 모바일에서는 포스터를 누른 뒤 이동할 등급을 선택할 수 있습니다. 최대 10장까지 등록할 수 있습니다.</div>
-  <div class="queue" id="queue"><div class="empty">아직 포스터가 없습니다. 첫 번째 영화를 추가해 보세요.</div></div>
-</section>
+    <h1>🎬 VINTAGE MOVIE TIER LIST</h1>
 
-<section class="panel">
-  <div class="section-head"><h2>✦ 나의 영화 등급표</h2><span class="count">포스터를 드래그해 자유롭게 배치</span></div>
-  <div class="board" id="board">
-    <div class="board-top">— MY PERSONAL FILM RANKING —</div>
-    <div class="tier" data-tier="S"><div class="tier-label">S</div><div class="tier-content" data-drop="S"></div></div>
-    <div class="tier" data-tier="A"><div class="tier-label">A</div><div class="tier-content" data-drop="A"></div></div>
-    <div class="tier" data-tier="B"><div class="tier-label">B</div><div class="tier-content" data-drop="B"></div></div>
-    <div class="tier" data-tier="C"><div class="tier-label">C</div><div class="tier-content" data-drop="C"></div></div>
-    <div class="tier" data-tier="D"><div class="tier-label">D</div><div class="tier-content" data-drop="D"></div></div>
-  </div>
-  <div class="footer-actions">
-    <button class="save" id="saveImage" type="button">⬇ 이미지 저장</button>
-    <button class="secondary" id="resetBoard" type="button">등급표에서 모두 꺼내기</button>
-  </div>
-  <div class="smallprint">THE END · 당신의 취향이 곧 별점입니다</div>
-</section>
-</div>
-<script>
-(() => {
-  const MAX = 10;
-  const filesInput = document.getElementById('files');
-  const queue = document.getElementById('queue');
-  const count = document.getElementById('count');
-  const board = document.getElementById('board');
-  const images = new Map();
-  let selectedId = null;
-  let dragId = null;
-  let nextId = 1;
+    <!-- 티어리스트 영역 (저장될 영역) -->
+    <div id="tier-container">
+        <div class="tier-row">
+            <div class="tier-label s">S</div>
+            <div class="tier-content" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        </div>
+        <div class="tier-row">
+            <div class="tier-label a">A</div>
+            <div class="tier-content" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        </div>
+        <div class="tier-row">
+            <div class="tier-label b">B</div>
+            <div class="tier-content" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        </div>
+        <div class="tier-row">
+            <div class="tier-label c">C</div>
+            <div class="tier-content" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        </div>
+        <div class="tier-row">
+            <div class="tier-label d">D</div>
+            <div class="tier-content" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        </div>
+    </div>
 
-  const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  function cardMarkup(item, inTier=false) {
-    return `<div class="poster" draggable="true" data-id="${item.id}" title="${escapeHtml(item.name)}">
-      <img src="${item.src}" alt="${escapeHtml(item.name)}">
-      ${inTier ? '' : `<button class="remove" type="button" aria-label="삭제" data-remove="${item.id}">×</button>`}
-      <span class="name">${escapeHtml(item.name)}</span>
-    </div>`;
-  }
-  function render() {
-    const items = [...images.values()];
-    count.textContent = `${items.length} / ${MAX}`;
-    queue.innerHTML = '';
-    const waiting = items.filter(x => !x.tier);
-    if (!waiting.length) queue.innerHTML = '<div class="empty">대기 중인 포스터가 없습니다. 등급표에 배치된 포스터는 아래에서 확인할 수 있습니다.</div>';
-    else waiting.forEach(item => queue.insertAdjacentHTML('beforeend', cardMarkup(item)));
-    document.querySelectorAll('.tier-content').forEach(el => {
-      el.innerHTML = '';
-      items.filter(x => x.tier === el.dataset.drop).forEach(item => el.insertAdjacentHTML('beforeend', cardMarkup(item, true)));
-    });
-    bindCards();
-  }
-  function bindCards() {
-    document.querySelectorAll('.poster').forEach(card => {
-      card.addEventListener('dragstart', e => {
-        dragId = Number(card.dataset.id);
-        card.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', String(dragId));
-      });
-      card.addEventListener('dragend', () => {
-        card.classList.remove('dragging');
-        document.querySelectorAll('.tier').forEach(x => x.classList.remove('over'));
-      });
-      card.addEventListener('click', e => {
-        if (e.target.closest('[data-remove]')) return;
-        const item = images.get(Number(card.dataset.id));
-        if (!item) return;
-        const choices = ['대기 보관함','S','A','B','C','D'];
-        const answer = prompt(`"${item.name}" 포스터를 어디에 둘까요?\n${choices.map((x,i)=>`${i+1}. ${x}`).join('\n')}\n번호를 입력하세요.`);
-        const n = Number(answer);
-        if (Number.isInteger(n) && n >= 1 && n <= choices.length) {
-          item.tier = n === 1 ? null : choices[n-1];
-          render();
+    <!-- 이미지 대기열 -->
+    <div id="pool" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <p id="placeholder-text" style="color: #666; width: 100%; text-align: center;">이미지를 업로드하면 여기에 나타납니다 (최대 10개)</p>
+    </div>
+
+    <!-- 컨트롤 버튼 -->
+    <div class="controls">
+        <input type="file" id="file-input" multiple accept="image/*" onchange="handleUpload(event)">
+        <button onclick="document.getElementById('file-input').click()">이미지 불러오기</button>
+        <button onclick="saveAsImage()">결과 저장하기</button>
+    </div>
+
+    <!-- 이미지 저장을 위한 외부 라이브러리 (CDN) -->
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+    <script>
+        /* --- 동작 로직 (JavaScript) --- */
+        let cardCount = 0;
+
+        // 1. 이미지 업로드 처리
+        function handleUpload(event) {
+            const files = event.target.files;
+            const pool = document.getElementById('pool');
+            const placeholder = document.getElementById('placeholder-text');
+
+            if (files.length + cardCount > 12) {
+                alert("원활한 관리를 위해 이미지는 10개 내외로 업로드해주세요.");
+            }
+
+            if (files.length > 0 && placeholder) {
+                placeholder.style.display = 'none';
+            }
+
+            for (let file of files) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const card = document.createElement('div');
+                    card.className = 'movie-card';
+                    card.draggable = true;
+                    card.id = 'card-' + Date.now() + Math.random();
+                    card.ondragstart = drag;
+
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    
+                    card.appendChild(img);
+                    pool.appendChild(card);
+                    cardCount++;
+                };
+                reader.readAsDataURL(file);
+            }
         }
-      });
-    });
-    document.querySelectorAll('[data-remove]').forEach(btn => btn.addEventListener('click', e => {
-      e.stopPropagation();
-      const item = images.get(Number(btn.dataset.remove));
-      if (item && confirm(`"${item.name}" 포스터를 삭제할까요?`)) {
-        images.delete(item.id);
-        render();
-      }
-    }));
-  }
-  document.querySelectorAll('.tier').forEach(tier => {
-    tier.addEventListener('dragover', e => {e.preventDefault();tier.classList.add('over');});
-    tier.addEventListener('dragleave', e => {if (!tier.contains(e.relatedTarget)) tier.classList.remove('over');});
-    tier.addEventListener('drop', e => {
-      e.preventDefault(); tier.classList.remove('over');
-      const id = Number(e.dataTransfer.getData('text/plain') || dragId);
-      const item = images.get(id);
-      if (item) {item.tier = tier.dataset.tier;render();}
-    });
-  });
-  queue.addEventListener('dragover', e => e.preventDefault());
-  queue.addEventListener('drop', e => {
-    e.preventDefault();
-    const id = Number(e.dataTransfer.getData('text/plain') || dragId);
-    const item = images.get(id);
-    if (item) {item.tier = null;render();}
-  });
-  filesInput.addEventListener('change', async e => {
-    const selected = [...e.target.files];
-    const room = MAX - images.size;
-    if (selected.length > room) alert(`최대 ${MAX}장까지 등록할 수 있어요. ${room}장만 추가합니다.`);
-    for (const file of selected.slice(0, room)) {
-      if (!file.type.startsWith('image/')) continue;
-      const src = await new Promise((resolve,reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-      images.set(nextId, {id:nextId, name:file.name.replace(/\.[^.]+$/,''), src, tier:null});
-      nextId++;
-    }
-    filesInput.value = '';
-    render();
-  });
-  document.getElementById('clearAll').addEventListener('click', () => {
-    if (images.size && confirm('등록한 포스터를 모두 삭제할까요?')) {images.clear();render();}
-  });
-  document.getElementById('resetBoard').addEventListener('click', () => {
-    images.forEach(item => item.tier = null);
-    render();
-  });
 
-  function roundedRect(ctx,x,y,w,h,r,fill,stroke) {
-    ctx.beginPath();ctx.roundRect(x,y,w,h,r);
-    if(fill){ctx.fillStyle=fill;ctx.fill();}
-    if(stroke){ctx.strokeStyle=stroke;ctx.stroke();}
-  }
-  async function saveAsImage() {
-    const button = document.getElementById('saveImage');
-    button.disabled = true; button.textContent = '이미지 만드는 중…';
-    try {
-      const width = 1500, pad = 46, labelW = 110, gap = 16;
-      const posterW = 104, posterH = 150, innerGap = 15;
-      const rows = ['S','A','B','C','D'];
-      const contentW = width - pad*2 - labelW;
-      const perRow = Math.max(1, Math.floor((contentW - 34 + innerGap)/(posterW+innerGap)));
-      const rowHeights = rows.map(t => {
-        const n = [...images.values()].filter(x=>x.tier===t).length;
-        return Math.max(174, Math.ceil(n/perRow)* (posterH+innerGap) + 26);
-      });
-      const height = 190 + rowHeights.reduce((a,b)=>a+b,0) + 4*gap + 70;
-      const canvas = document.createElement('canvas');
-      canvas.width = width; canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#241914';ctx.fillRect(0,0,width,height);
-      ctx.fillStyle = '#eee2c8';ctx.fillRect(24,24,width-48,height-48);
-      ctx.strokeStyle = '#987647';ctx.lineWidth = 5;ctx.strokeRect(34,34,width-68,height-68);
-      ctx.strokeStyle = '#b99d6d';ctx.lineWidth = 1;ctx.strokeRect(43,43,width-86,height-86);
-      ctx.textAlign='center';ctx.fillStyle='#8d3027';ctx.font='bold 17px Georgia, serif';
-      ctx.fillText('THE GRAND PICTURE HOUSE  ·  PERSONAL FILM RANKING',width/2,84);
-      ctx.fillStyle='#241b16';ctx.font='bold 42px serif';ctx.fillText('나의 영화 등급표',width/2,137);
-      ctx.fillStyle='#a88954';ctx.fillRect(width/2-100,155,200,2);
-      let y=180;
-      const tierColors={S:'#7d2d24',A:'#9b5631',B:'#9c7940',C:'#6e7654',D:'#62605a'};
-      for(let ri=0;ri<rows.length;ri++){
-        const tier=rows[ri], rh=rowHeights[ri];
-        roundedRect(ctx,pad,y,width-pad*2,rh,3,'#d8c7a5','#a88e62');
-        ctx.fillStyle=tierColors[tier];ctx.fillRect(pad,y,labelW,rh);
-        ctx.strokeStyle='#c4a36a';ctx.lineWidth=3;ctx.strokeRect(pad+2,y+2,labelW-4,rh-4);
-        ctx.fillStyle='#f5e8cb';ctx.font='bold 54px Georgia,serif';ctx.textAlign='center';ctx.textBaseline='middle';
-        ctx.fillText(tier,pad+labelW/2,y+rh/2);
-        const tierItems=[...images.values()].filter(x=>x.tier===tier);
-        for(let i=0;i<tierItems.length;i++){
-          const item=tierItems[i], col=i%perRow, row=Math.floor(i/perRow);
-          const x=pad+labelW+18+col*(posterW+innerGap), py=y+12+row*(posterH+innerGap);
-          const img=await loadImage(item.src);
-          ctx.fillStyle='#f7edda';ctx.fillRect(x-4,py-4,posterW+8,posterH+8);
-          ctx.strokeStyle='#9e8968';ctx.lineWidth=1;ctx.strokeRect(x-4,py-4,posterW+8,posterH+8);
-          const scale=Math.max(posterW/img.width,posterH/img.height);
-          const sw=posterW/scale, sh=posterH/scale;
-          ctx.save();ctx.beginPath();ctx.rect(x,py,posterW,posterH);ctx.clip();
-          ctx.drawImage(img,(img.width-sw)/2,(img.height-sh)/2,sw,sh,x,py,posterW,posterH);ctx.restore();
+        // 2. 드래그 앤 드롭 로직
+        function allowDrop(e) {
+            e.preventDefault();
         }
-        y+=rh+gap;
-      }
-      ctx.textBaseline='alphabetic';ctx.fillStyle='#7b6b54';ctx.font='13px Georgia,serif';ctx.textAlign='center';
-      ctx.fillText('THE END  ·  YOUR TASTE, YOUR STORY',width/2,height-55);
-      const link=document.createElement('a');
-      link.download='나의-영화-티어리스트.png';
-      link.href=canvas.toDataURL('image/png');
-      link.click();
-    } catch(err) {
-      console.error(err);
-      alert('이미지를 저장하지 못했습니다. 이미지 파일을 다시 추가한 뒤 시도해 주세요.');
-    } finally {button.disabled=false;button.textContent='⬇ 이미지 저장';}
-  }
-  function loadImage(src) {
-    return new Promise((resolve,reject)=>{
-      const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=src;
-    });
-  }
-  document.getElementById('saveImage').addEventListener('click',saveAsImage);
-  render();
-})();
-</script>
+
+        function drag(e) {
+            e.dataTransfer.setData("text", e.target.id);
+        }
+
+        function drop(e) {
+            e.preventDefault();
+            const data = e.dataTransfer.getData("text");
+            const draggedElement = document.getElementById(data);
+            
+            // drop 타겟이 tier-content인지 확인 (자식 요소인 img 등에 드롭되는 경우 처리)
+            let target = e.target;
+            while (target && !target.classList.contains('tier-content') && target.id !== 'pool') {
+                target = target.parentElement;
+            }
+
+            if (target) {
+                target.appendChild(draggedElement);
+            }
+        }
+
+        // 3. 이미지 저장 기능 (html2canvas 사용)
+        function saveAsImage() {
+            const container = document.getElementById('tier-container');
+            
+            html2canvas(container).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'my-movie-tier-list.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+    </script>
 </body>
 </html>
