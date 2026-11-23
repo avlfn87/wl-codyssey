@@ -1,2 +1,2 @@
 # wl-codyssey
-Github와 codyssey를 연동하기 위한 repository입니다.
+코디세이에서 배운 것들을 모아두는 곳 입니다.
